@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"golang.org/x/crypto/bcrypt"
 	"time"
 )
 
@@ -13,15 +14,30 @@ const (
 )
 
 type User struct {
+	ID          uint64    `json:"id"`
 	Email       string    `json:"email"`
 	Phone       string    `json:"phone"`
 	Password    string    `json:"password"`
 	Role        userRole  `json:"role"`
-	Balance     int       `json:"balance"`
 	DateOfBirth time.Time `json:"dateOfBirth"`
 	Description string    `json:"description"`
 	FacebookId  string    `json:"facebookId"`
 	GoogleId    string    `json:"googleId"`
+	TimeStamp
+}
+
+func (*User) Table() string {
+	return "Users"
+}
+
+func (u *User) HashPassword() {
+	bytes, _ := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
+	u.Password = string(bytes)
+}
+
+func (u *User) CheckPasswordHash(password string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
+	return err == nil
 }
 
 type BasicInfo struct {
@@ -34,8 +50,8 @@ type Token struct {
 	RefreshToken string `json:"refreshToken"`
 }
 
-type TokenData struct {
-	ID    uint   `json:"id"`
+type UserTokenData struct {
+	ID    uint64 `json:"id"`
 	Role  string `json:"role"`
 	Email string `json:"email"`
 	Phone string `json:"phone"`
@@ -51,7 +67,7 @@ type CreateUserRequestBody struct {
 	BasicInfo
 	DateOfBirth      string `json:"dateOfBirth"`
 	Password         string `json:"password"`
-	TermsOfServiceId int    `json:"termsOfServiceId"`
+	TermsOfServiceId int64  `json:"termsOfServiceId"`
 }
 
 type LoginUserRequestBody struct {

@@ -30,12 +30,19 @@ type (
 
 type (
 	User interface {
-		Register(ctx context.Context, user entity.CreateUserRequestBody) error
-		Login(ctx context.Context, user entity.LoginUserRequestBody) (entity.User, error)
+		Register(ctx context.Context, user entity.CreateUserRequestBody) (*entity.AuthUserResponse, Status, error)
+		Login(ctx context.Context, user entity.LoginUserRequestBody) (*entity.AuthUserResponse, Status, error)
 	}
 
 	IUserRepo interface {
-		Create(ctx context.Context, user entity.CreateUserRequestBody) error
-		Login(ctx context.Context, user entity.LoginUserRequestBody) (entity.User, error)
+		Create(ctx context.Context, user entity.User) error
+		GetByEmail(ctx context.Context, email string) (*entity.User, error)
+		GetByPhone(ctx context.Context, phone string) (*entity.User, error)
+	}
+)
+
+type (
+	ITOSRepo interface {
+		GetByID(ctx context.Context, id int64) (*entity.TermsOfService, error)
 	}
 )

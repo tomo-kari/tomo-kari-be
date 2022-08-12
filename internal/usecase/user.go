@@ -3,43 +3,90 @@ package usecase
 import (
 	"context"
 	"fmt"
-
+	"net/http"
+	"time"
+	"tomokari/internal/constants"
 	"tomokari/internal/entity"
+	"tomokari/internal/utils"
 )
 
 // UserUseCase -.
 type UserUseCase struct {
-	repo IUserRepo
+	userRepo IUserRepo
+	tosRepo  ITOSRepo
 }
 
 // NewUserUseCase -.
-func NewUserUseCase(r IUserRepo) *UserUseCase {
+func NewUserUseCase(u IUserRepo, tosRepo ITOSRepo) *UserUseCase {
 	return &UserUseCase{
-		repo: r,
+		userRepo: u,
+		tosRepo:  tosRepo,
+	}
+}
+
+func createAuthResponse(user *entity.User) *entity.AuthUserResponse {
+	tokenData := entity.UserTokenData{
+		ID:    user.ID,
+		Email: user.Email,
+		Phone: user.Phone,
+		Role:  string(user.Role),
+	}
+	accessToken, _ := utils.GenerateToken(tokenData, constants.AccessToken)
+	refreshToken, _ := utils.GenerateToken(tokenData, constants.RefreshToken)
+	return &entity.AuthUserResponse{
+		BasicInfo: entity.BasicInfo{
+			Email: user.Email,
+			Phone: user.Phone,
+		},
+		DateOfBirth: user.DateOfBirth,
+		Token: entity.Token{
+			AccessToken:  accessToken,
+			RefreshToken: refreshToken,
+		},
 	}
 }
 
 // Register - create a new user.
-func (uc *UserUseCase) Register(ctx context.Context, user entity.CreateUserRequestBody) error {
-	err := uc.repo.Create(ctx, user)
-	if err != nil {
-		return fmt.Errorf("UserUseCase - Create - s.repo.Create: %w", err)
+func (uc *UserUseCase) Register(ctx context.Context, registerInfo entity.CreateUserRequestBody) (*entity.AuthUserResponse, Status, error) {
+	tos, err := uc.tosRepo.GetByID(ctx, registerInfo.TermsOfServiceId)
+	if tos == nil {
+		return nil, http.StatusBadRequest, fmt.Errorf(constants.TermsOfServiceNotAcceptedErrorMessage)
 	}
 
-	return nil
+	existedUser, err := uc.userRepo.GetByEmail(ctx, registerInfo.Email)
+	if existedUser != nil {
+		return nil, http.StatusBadRequest, fmt.Errorf(constants.DuplicatedEmailErrorMessage)
+	}
+
+	existedUser, err = uc.userRepo.GetByPhone(ctx, registerInfo.Phone)
+	if existedUser != nil {
+		return nil, http.StatusBadRequest, fmt.Errorf(constants.DuplicatedPhoneErrorMessage)
+	}
+
+	var user entity.User
+	user.Email = registerInfo.Email
+	user.Phone = registerInfo.Phone
+	user.Password = registerInfo.Password
+	user.DateOfBirth, err = time.Parse(time.RFC3339, registerInfo.DateOfBirth)
+	user.HashPassword()
+	err = uc.userRepo.Create(ctx, user)
+	if err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+
+	respData := createAuthResponse(&user)
+	return respData, http.StatusOK, nil
 }
 
 // Login -.
-func (uc *TranslationUseCase) Login(ctx context.Context, t entity.Translation) (entity.Translation, error) {
-	translation, err := uc.webAPI.Translate(t)
-	if err != nil {
-		return entity.Translation{}, fmt.Errorf("TranslationUseCase - Translate - s.webAPI.Translate: %w", err)
+func (uc *UserUseCase) Login(ctx context.Context, loginInfo entity.LoginUserRequestBody) (*entity.AuthUserResponse, Status, error) {
+	user, _ := uc.userRepo.GetByEmail(ctx, loginInfo.Email)
+	if user == nil {
+		return nil, http.StatusBadRequest, fmt.Errorf(constants.IncorrectUserCredentialsErrorMessage)
 	}
-
-	err = uc.repo.Store(context.Background(), translation)
-	if err != nil {
-		return entity.Translation{}, fmt.Errorf("TranslationUseCase - Translate - s.repo.Store: %w", err)
+	if !user.CheckPasswordHash(loginInfo.Password) {
+		return nil, http.StatusBadRequest, fmt.Errorf(constants.IncorrectUserCredentialsErrorMessage)
 	}
-
-	return translation, nil
+	respData := createAuthResponse(user)
+	return respData, http.StatusOK, nil
 }

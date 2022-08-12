@@ -11,7 +11,7 @@ import (
 )
 
 type userRoutes struct {
-	t usecase.User
+	u usecase.User
 	l logger.Interface
 }
 
@@ -23,10 +23,6 @@ func newUserRoutes(handler *gin.RouterGroup, t usecase.User, l logger.Interface)
 		h.GET("/register", r.register)
 		h.POST("/login", r.login)
 	}
-}
-
-type registerResponse struct {
-	History []entity.Translation `json:"history"`
 }
 
 // @Summary     Show history
@@ -46,44 +42,42 @@ func (r *userRoutes) register(c *gin.Context) {
 
 		return
 	}
-	err := r.t.Register(c.Request.Context(), body)
+	authUser, status, err := r.u.Register(c.Request.Context(), body)
 	if err != nil {
 		r.l.Error(err, "http - v1 - register")
-		errorResponse(c, http.StatusInternalServerError, "database problems")
+		errorResponse(c, status, "database problems")
 
 		return
 	}
 
-	c.JSON(http.StatusOK, registerResponse{})
+	responseWithData(c, status, authUser)
 }
 
-// @Summary     Translate
-// @Description Translate a text
-// @ID          do-translate
-// @Tags  	    translation
+// @Summary     Login
+// @Description Login with email and password
+// @ID          do-login
+// @Tags  	    user
 // @Accept      json
 // @Produce     json
-// @Param       request body doTranslateRequest true "Set up translation"
-// @Success     200 {object} entity.Translation
+// @Param       request body entity.LoginUserRequestBody true "Set up translation"
+// @Success     200 {object} entity.User
 // @Failure     400 {object} response
 // @Failure     500 {object} response
 // @Router      /translation/do-translate [post]
 func (r *userRoutes) login(c *gin.Context) {
 	var body entity.LoginUserRequestBody
 	if err := c.ShouldBindJSON(&body); err != nil {
-		r.l.Error(err, "http - v1 - doTranslate")
+		r.l.Error(err, "http - v1 - login")
 		errorResponse(c, http.StatusBadRequest, "invalid request body")
-
 		return
 	}
 
-	user, err := r.t.Login(c.Request.Context(), body)
+	authUser, status, err := r.u.Login(c.Request.Context(), body)
 	if err != nil {
 		r.l.Error(err, "http - v1 - doTranslate")
-		errorResponse(c, http.StatusInternalServerError, "translation service problems")
-
+		errorResponse(c, status, err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, user)
+	responseWithData(c, status, authUser)
 }

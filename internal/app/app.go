@@ -39,6 +39,7 @@ func Run(cfg *config.Config) {
 	)
 	userUseCase := usecase.NewUserUseCase(
 		repo.NewUserRepo(pg),
+		repo.NewTOSRepo(pg),
 	)
 
 	// RabbitMQ RPC Server
