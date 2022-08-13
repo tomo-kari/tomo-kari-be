@@ -69,6 +69,7 @@ func (uc *UserUseCase) Register(ctx context.Context, registerInfo entity.CreateU
 	user.Password = registerInfo.Password
 	user.DateOfBirth, err = time.Parse(time.RFC3339, registerInfo.DateOfBirth)
 	user.HashPassword()
+	user.Role = entity.USER
 	err = uc.userRepo.Create(ctx, user)
 	if err != nil {
 		return nil, http.StatusInternalServerError, err

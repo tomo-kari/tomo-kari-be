@@ -2,6 +2,7 @@ package v1
 
 import (
 	"net/http"
+	"tomokari/internal/constants"
 
 	"github.com/gin-gonic/gin"
 
@@ -20,37 +21,36 @@ func newUserRoutes(handler *gin.RouterGroup, t usecase.User, l logger.Interface)
 
 	h := handler.Group("/auth")
 	{
-		h.GET("/register", r.register)
+		h.POST("/register", r.register)
 		h.POST("/login", r.login)
 	}
 }
 
-// @Summary     Show history
-// @Description Show all translation history
-// @ID          history
-// @Tags  	    translation
+// @Summary     Register
+// @Description Register with email and password
+// @ID          do-register
+// @Tags  	    registration
 // @Accept      json
 // @Produce     json
 // @Success     200 {object} registerResponse
 // @Failure     500 {object} response
-// @Router      /translation/history [get]
+// @Router      /auth/register [post]
 func (r *userRoutes) register(c *gin.Context) {
 	var body entity.CreateUserRequestBody
 	if err := c.ShouldBindJSON(&body); err != nil {
 		r.l.Error(err, "http - v1 - register")
-		errorResponse(c, http.StatusBadRequest, "invalid request body")
-
+		errorResponse(c, http.StatusBadRequest, constants.UserInfoErrorMessage)
 		return
 	}
 	authUser, status, err := r.u.Register(c.Request.Context(), body)
 	if err != nil {
 		r.l.Error(err, "http - v1 - register")
-		errorResponse(c, status, "database problems")
-
+		errMsg := err.Error()
+		errorResponse(c, status, errMsg)
 		return
 	}
 
-	responseWithData(c, status, authUser)
+	responseWithData(c, status, authUser, "")
 }
 
 // @Summary     Login
@@ -79,5 +79,5 @@ func (r *userRoutes) login(c *gin.Context) {
 		return
 	}
 
-	responseWithData(c, status, authUser)
+	responseWithData(c, status, authUser, "")
 }

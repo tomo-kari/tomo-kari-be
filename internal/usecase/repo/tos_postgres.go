@@ -20,7 +20,7 @@ func NewTOSRepo(pg *postgres.Postgres) *TOSRepo {
 func (tos TOSRepo) GetByID(ctx context.Context, id int64) (*entity.TermsOfService, error) {
 	sql, args, err := tos.Builder.
 		Select("id, content").
-		From("terms_of_service").
+		From((&entity.TermsOfService{}).Table()).
 		Where("id = $1", id).
 		ToSql()
 	if err != nil {

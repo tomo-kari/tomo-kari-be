@@ -52,8 +52,7 @@ func Run(cfg *config.Config) {
 
 	// HTTP Server
 	handler := gin.New()
-	v1.NewTranslationRouter(handler, l, translationUseCase)
-	v1.NewUserRouter(handler, l, userUseCase)
+	v1.NewTranslationRouter(handler, l, translationUseCase, userUseCase)
 	httpServer := httpserver.New(handler, httpserver.Port(cfg.HTTP.Port))
 
 	// Waiting signal

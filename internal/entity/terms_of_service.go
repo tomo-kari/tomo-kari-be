@@ -5,3 +5,7 @@ type TermsOfService struct {
 	Content string `json:"content"`
 	TimeStamp
 }
+
+func (*TermsOfService) Table() string {
+	return "TermsOfService"
+}

@@ -46,8 +46,8 @@ type (
 	}
 
 	JWT struct {
-		SecretKey       string `env-required:"true" yaml:"secret_key" env:"JWT_SECRET_KEY"`
-		ExpirationHours int    `env-required:"true" yaml:"expiration_hours" env:"JWT_EXPIRATION_HOURS"`
+		SecretKey       string `env:"JWT_SECRET_KEY"`
+		ExpirationHours int    `env:"JWT_EXPIRATION_HOURS"`
 	}
 )
 

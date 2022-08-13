@@ -23,7 +23,7 @@ func NewUserRepo(pg *postgres.Postgres) *UserRepo {
 // Create -.
 func (u *UserRepo) Create(ctx context.Context, user entity.User) error {
 	sql, args, err := u.Builder.
-		Insert("user").
+		Insert((&entity.User{}).Table()).
 		Columns("email, phone, password, role, date_of_birth, description").
 		Values(user.Email, user.Phone, user.Password, user.Role, user.DateOfBirth, user.Description).
 		ToSql()
@@ -55,14 +55,15 @@ func (u *UserRepo) GetByEmail(ctx context.Context, email string) (*entity.User, 
 		return nil, fmt.Errorf("UserRepo - GetByEmail - u.Pool.Query: %w", err)
 	}
 	defer rows.Close()
-	var user entity.User
+	var user *entity.User
 	for rows.Next() {
+		user = &entity.User{}
 		err := rows.Scan(&user.ID, &user.Email, &user.Phone, &user.Role, &user.Password, &user.DateOfBirth)
 		if err != nil {
 			return nil, fmt.Errorf("UserRepo - GetByEmail - rows.Scan: %w", err)
 		}
 	}
-	return &user, nil
+	return user, nil
 }
 
 func (u *UserRepo) GetByPhone(ctx context.Context, phone string) (*entity.User, error) {
@@ -81,12 +82,12 @@ func (u *UserRepo) GetByPhone(ctx context.Context, phone string) (*entity.User, 
 	}
 	defer rows.Close()
 
-	var user entity.User
+	var user *entity.User
 	for rows.Next() {
 		err := rows.Scan(&user.ID, &user.Email, &user.Phone, &user.Role, &user.Password, &user.DateOfBirth)
 		if err != nil {
 			return nil, fmt.Errorf("UserRepo - GetByPhone - rows.Scan: %w", err)
 		}
 	}
-	return &user, nil
+	return user, nil
 }
