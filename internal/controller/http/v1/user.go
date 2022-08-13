@@ -3,6 +3,7 @@ package v1
 import (
 	"net/http"
 	"tomokari/internal/constants"
+	"tomokari/pkg/postgres"
 
 	"github.com/gin-gonic/gin"
 
@@ -23,6 +24,7 @@ func newUserRoutes(handler *gin.RouterGroup, t usecase.User, l logger.Interface)
 	{
 		h.POST("/register", r.register)
 		h.POST("/login", r.login)
+		h.POST("/candidates", r.getCandidates)
 	}
 }
 
@@ -80,4 +82,24 @@ func (r *userRoutes) login(c *gin.Context) {
 	}
 
 	responseWithData(c, status, authUser, "")
+}
+
+func (r *userRoutes) getCandidates(c *gin.Context) {
+	var filter postgres.GetManyRequestBody
+	if err := c.ShouldBindJSON(&filter); err != nil {
+		r.l.Error(err, "http - v1 - getCandidates")
+		errorResponse(c, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	candidates, err := r.u.GetCandidates(c.Request.Context(), filter)
+	if err != nil {
+		r.l.Error(err, "http - v1 - getCandidates")
+		errorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if candidates == nil {
+		candidates = []entity.Map{}
+	}
+	responseWithData(c, http.StatusOK, candidates, "")
 }

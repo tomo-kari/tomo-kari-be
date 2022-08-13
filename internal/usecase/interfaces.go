@@ -3,6 +3,7 @@ package usecase
 
 import (
 	"context"
+	"tomokari/pkg/postgres"
 
 	"tomokari/internal/entity"
 )
@@ -32,12 +33,14 @@ type (
 	User interface {
 		Register(ctx context.Context, user entity.CreateUserRequestBody) (*entity.AuthUserResponse, Status, error)
 		Login(ctx context.Context, user entity.LoginUserRequestBody) (*entity.AuthUserResponse, Status, error)
+		GetCandidates(ctx context.Context, filter postgres.GetManyRequestBody) ([]entity.Map, error)
 	}
 
 	IUserRepo interface {
-		Create(ctx context.Context, user entity.User) error
+		Create(ctx context.Context, user *entity.User) error
 		GetByEmail(ctx context.Context, email string) (*entity.User, error)
 		GetByPhone(ctx context.Context, phone string) (*entity.User, error)
+		GetMany(ctx context.Context, filter postgres.GetManyRequestBody) ([]entity.Map, error)
 	}
 )
 

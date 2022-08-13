@@ -58,6 +58,7 @@ type UserTokenData struct {
 }
 
 type AuthUserResponse struct {
+	ID uint64 `json:"id"`
 	BasicInfo
 	DateOfBirth time.Time `json:"dateOfBirth"`
 	Token

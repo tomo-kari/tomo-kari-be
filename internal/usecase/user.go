@@ -8,6 +8,7 @@ import (
 	"tomokari/internal/constants"
 	"tomokari/internal/entity"
 	"tomokari/internal/utils"
+	"tomokari/pkg/postgres"
 )
 
 // UserUseCase -.
@@ -34,6 +35,7 @@ func createAuthResponse(user *entity.User) *entity.AuthUserResponse {
 	accessToken, _ := utils.GenerateToken(tokenData, constants.AccessToken)
 	refreshToken, _ := utils.GenerateToken(tokenData, constants.RefreshToken)
 	return &entity.AuthUserResponse{
+		ID: user.ID,
 		BasicInfo: entity.BasicInfo{
 			Email: user.Email,
 			Phone: user.Phone,
@@ -70,7 +72,7 @@ func (uc *UserUseCase) Register(ctx context.Context, registerInfo entity.CreateU
 	user.DateOfBirth, err = time.Parse(time.RFC3339, registerInfo.DateOfBirth)
 	user.HashPassword()
 	user.Role = entity.USER
-	err = uc.userRepo.Create(ctx, user)
+	err = uc.userRepo.Create(ctx, &user)
 	if err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
@@ -90,4 +92,8 @@ func (uc *UserUseCase) Login(ctx context.Context, loginInfo entity.LoginUserRequ
 	}
 	respData := createAuthResponse(user)
 	return respData, http.StatusOK, nil
+}
+
+func (uc *UserUseCase) GetCandidates(ctx context.Context, filter postgres.GetManyRequestBody) ([]entity.Map, error) {
+	return uc.userRepo.GetMany(ctx, filter)
 }
