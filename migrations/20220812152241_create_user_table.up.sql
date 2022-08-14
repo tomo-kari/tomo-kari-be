@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS Users (
     description text DEFAULT '',
     facebook_id varchar(255),
     google_id varchar(255),
+    followerIds serial[] DEFAULT ARRAY [],
+    introduction text DEFAULT '',
     created_at timestamp NOT NULL DEFAULT now(),
     updated_at timestamp NOT NULL DEFAULT now(),
     deleted_at timestamp
