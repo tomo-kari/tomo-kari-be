@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"encoding/json"
 	"net/http"
 	"tomokari/internal/constants"
 	"tomokari/pkg/postgres"
@@ -22,7 +23,7 @@ func newUserRoutes(handler *gin.RouterGroup, t usecase.User, l logger.Interface)
 
 	h := handler.Group("/auth")
 	{
-		h.POST("/register", r.register)
+		h.POST("/register", gin.WrapF(r.register))
 		h.POST("/login", r.login)
 		h.POST("/candidates", r.getCandidates)
 	}
@@ -37,22 +38,22 @@ func newUserRoutes(handler *gin.RouterGroup, t usecase.User, l logger.Interface)
 // @Success     200 {object} registerResponse
 // @Failure     500 {object} response
 // @Router      /auth/register [post]
-func (r *userRoutes) register(c *gin.Context) {
+func (ur *userRoutes) register(res http.ResponseWriter, req *http.Request) {
 	var body entity.CreateUserRequestBody
-	if err := c.ShouldBindJSON(&body); err != nil {
-		r.l.Error(err, "http - v1 - register")
-		errorResponse(c, http.StatusBadRequest, constants.UserInfoErrorMessage)
+	if err := json.NewDecoder(req.Body).Decode(&body); err != nil {
+		ur.l.Error(err, "http - v1 - register")
+		errorResponse2(res, http.StatusBadRequest, constants.UserInfoErrorMessage)
 		return
 	}
-	authUser, status, err := r.u.Register(c.Request.Context(), body)
+	authUser, status, err := ur.u.Register(req.Context(), body)
 	if err != nil {
-		r.l.Error(err, "http - v1 - register")
+		ur.l.Error(err, "http - v1 - register")
 		errMsg := err.Error()
-		errorResponse(c, status, errMsg)
+		errorResponse2(res, status, errMsg)
 		return
 	}
 
-	responseWithData(c, status, authUser, "")
+	responseWithData2(res, status, authUser, "")
 }
 
 // @Summary     Login
@@ -66,17 +67,17 @@ func (r *userRoutes) register(c *gin.Context) {
 // @Failure     400 {object} response
 // @Failure     500 {object} response
 // @Router      /translation/do-translate [post]
-func (r *userRoutes) login(c *gin.Context) {
+func (ur *userRoutes) login(c *gin.Context) {
 	var body entity.LoginUserRequestBody
 	if err := c.ShouldBindJSON(&body); err != nil {
-		r.l.Error(err, "http - v1 - login")
+		ur.l.Error(err, "http - v1 - login")
 		errorResponse(c, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	authUser, status, err := r.u.Login(c.Request.Context(), body)
+	authUser, status, err := ur.u.Login(c.Request.Context(), body)
 	if err != nil {
-		r.l.Error(err, "http - v1 - doTranslate")
+		ur.l.Error(err, "http - v1 - doTranslate")
 		errorResponse(c, status, err.Error())
 		return
 	}
@@ -84,16 +85,16 @@ func (r *userRoutes) login(c *gin.Context) {
 	responseWithData(c, status, authUser, "")
 }
 
-func (r *userRoutes) getCandidates(c *gin.Context) {
+func (ur *userRoutes) getCandidates(c *gin.Context) {
 	var filter postgres.GetManyRequestBody
 	if err := c.ShouldBindJSON(&filter); err != nil {
-		r.l.Error(err, "http - v1 - getCandidates")
+		ur.l.Error(err, "http - v1 - getCandidates")
 		errorResponse(c, http.StatusBadRequest, "invalid request body")
 		return
 	}
-	candidates, err := r.u.GetCandidates(c.Request.Context(), filter)
+	candidates, err := ur.u.GetCandidates(c.Request.Context(), filter)
 	if err != nil {
-		r.l.Error(err, "http - v1 - getCandidates")
+		ur.l.Error(err, "http - v1 - getCandidates")
 		errorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
