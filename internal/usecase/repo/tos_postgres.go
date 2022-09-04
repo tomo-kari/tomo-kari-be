@@ -33,12 +33,13 @@ func (tos TOSRepo) GetByID(ctx context.Context, id int64) (*entity.TermsOfServic
 	}
 	defer rows.Close()
 
-	var t entity.TermsOfService
-	for rows.Next() {
+	if rows.Next() {
+		var t entity.TermsOfService
 		err := rows.Scan(&t.ID, &t.Content)
 		if err != nil {
 			return nil, fmt.Errorf("TOSRepo - GetByID - rows.Scan: %w", err)
 		}
+		return &t, nil
 	}
-	return &t, nil
+	return nil, fmt.Errorf("TOSRepo - GetByID - not found")
 }

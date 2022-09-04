@@ -2,6 +2,7 @@
 package v1
 
 import (
+	"github.com/go-playground/validator/v10"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -22,7 +23,7 @@ import (
 // @version     1.0
 // @host        localhost:8080
 // @BasePath    /v1
-func NewTranslationRouter(handler *gin.Engine, l logger.Interface, t usecase.Translation, u usecase.User) {
+func NewTranslationRouter(handler *gin.Engine, l logger.Interface, v *validator.Validate, t usecase.Translation, u usecase.User) {
 	// Options
 	handler.Use(gin.Logger())
 	handler.Use(gin.Recovery())
@@ -40,5 +41,5 @@ func NewTranslationRouter(handler *gin.Engine, l logger.Interface, t usecase.Tra
 	// Routers
 	h := handler.Group("/v1")
 	newTranslationRoutes(h, t, l)
-	newUserRoutes(h, u, l)
+	newUserRoutes(h, u, l, v)
 }

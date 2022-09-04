@@ -78,7 +78,7 @@ func (uc *UserUseCase) Register(ctx context.Context, registerInfo entity.CreateU
 	}
 
 	respData := createAuthResponse(&user)
-	return respData, http.StatusOK, nil
+	return respData, http.StatusCreated, nil
 }
 
 // Login -.

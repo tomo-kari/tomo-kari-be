@@ -21,6 +21,7 @@ require (
 	github.com/swaggo/gin-swagger v1.3.3
 	github.com/swaggo/swag v1.7.6
 	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa
+	gopkg.in/go-playground/assert.v1 v1.2.1
 )
 
 require (

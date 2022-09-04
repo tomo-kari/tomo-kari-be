@@ -3,6 +3,7 @@ package app
 
 import (
 	"fmt"
+	"github.com/go-playground/validator/v10"
 	"os"
 	"os/signal"
 	"syscall"
@@ -24,6 +25,7 @@ import (
 // Run creates objects via constructors.
 func Run(cfg *config.Config) {
 	l := logger.New(cfg.Log.Level)
+	v := validator.New()
 
 	// Repository
 	pg, err := postgres.New(cfg.PG.URL, postgres.MaxPoolSize(cfg.PG.PoolMax))
@@ -52,7 +54,7 @@ func Run(cfg *config.Config) {
 
 	// HTTP Server
 	handler := gin.New()
-	v1.NewTranslationRouter(handler, l, translationUseCase, userUseCase)
+	v1.NewTranslationRouter(handler, l, v, translationUseCase, userUseCase)
 	httpServer := httpserver.New(handler, httpserver.Port(cfg.HTTP.Port))
 
 	// Waiting signal

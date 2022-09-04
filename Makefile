@@ -1,4 +1,4 @@
-include .env.example
+include .env
 export
 
 # HELP =================================================================================================================
@@ -35,7 +35,7 @@ docker-rm-volume: ### remove docker volume
 .PHONY: docker-rm-volume
 
 linter-golangci: ### check by golangci linter
-	golangci-lint run
+	golangci-lint run -v
 .PHONY: linter-golangci
 
 linter-hadolint: ### check by hadolint linter
@@ -47,12 +47,8 @@ linter-dotenv: ### check by dotenv linter
 .PHONY: linter-dotenv
 
 test: ### run test
-	go test -v -cover -race ./internal/...
+	go test -v -cover -race -coverpkg=./... ./tests
 .PHONY: test
-
-integration-test: ### run integration-test
-	go clean -testcache && go test -v ./integration-test/...
-.PHONY: integration-test
 
 mock: ### run mockery
 	mockery --all -r --case snake
@@ -65,3 +61,6 @@ migrate-create:  ### create new migration
 migrate-up: ### migration up
 	migrate -path migrations -database '$(PG_URL)?sslmode=disable' up
 .PHONY: migrate-up
+
+migrate-test: ### migration test
+	migrate -path migrations -database '$(PG_TEST_URL)?sslmode=disable' up

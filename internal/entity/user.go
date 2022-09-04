@@ -41,8 +41,8 @@ func (u *User) CheckPasswordHash(password string) bool {
 }
 
 type BasicInfo struct {
-	Email string `json:"email"`
-	Phone string `json:"phone"`
+	Email string `json:"email" validate:"required,email"`
+	Phone string `json:"phone" validate:"required"`
 }
 
 type Token struct {
@@ -66,8 +66,8 @@ type AuthUserResponse struct {
 
 type CreateUserRequestBody struct {
 	BasicInfo
-	DateOfBirth      string `json:"dateOfBirth"`
-	Password         string `json:"password"`
+	DateOfBirth      string `json:"dateOfBirth" validate:"required"`
+	Password         string `json:"password" validate:"required,gt=5"`
 	TermsOfServiceId int64  `json:"termsOfServiceId"`
 }
 
